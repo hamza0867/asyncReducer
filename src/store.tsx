@@ -1,4 +1,5 @@
-import React, {Reducer, Dispatch, useReducer} from 'react';
+import React, {Reducer, Dispatch, useReducer, useContext} from 'react';
+import {UiStoreAction, UiAction, Store2Context} from './store2';
 
 const url = "https://jsonplaceholder.typicode.com/todos"
 
@@ -17,8 +18,6 @@ export enum Action {
   UPDATE_TODO,
   UPDATE_TODOS,
   FETCH_TODOS,
-  TOGGLE_FETCH_UP,
-  TOGGLE_FETCH_DOWN
 }
 
 
@@ -39,28 +38,24 @@ const reducer: Reducer<State, StoreAction> = (state, action) => {
         todos: (action.payload as Todo[])
       }
     }
-    case Action.TOGGLE_FETCH_UP: {
-      console.log("fetching ...");
-      return state;
-    }
-    case Action.TOGGLE_FETCH_DOWN: {
-      console.log("done fetching");
-      return state;
-    }
     default: {
       return state
     }
   }
 }
 
-const middleware = (dispatch: Dispatch<StoreAction>) =>
+const middleware = (dispatch: Dispatch<StoreAction>, uiDispatch: Dispatch<UiStoreAction>) =>
   async (action: StoreAction) => {
     switch (action.type) {
       case Action.FETCH_TODOS: {
-        dispatch({type: Action.TOGGLE_FETCH_UP})
-        const todos: Todo[] = await fetch(url).then(res => res.json()).then((res: any[]) => res.slice(0, 5))
+        uiDispatch({type: UiAction.TOGGLE_FETCH_UP})
+        const todos: Todo[] = await fetch(url).then(res => res.json()).then((res: any[]) => {
+          const ret = res.slice(0, 5)
+          console.log(ret);
+          return ret
+        })
         dispatch({type: Action.UPDATE_TODOS, payload: todos})
-        dispatch({type: Action.TOGGLE_FETCH_DOWN})
+        uiDispatch({type: UiAction.TOGGLE_FETCH_DOWN})
         return;
       }
       default:
@@ -74,8 +69,9 @@ export const StoreContext = React.createContext<StoreContextProps>({} as StoreCo
 
 const StoreProvider: React.FC = ({children}) => {
   const [state, dispatch] = useReducer(reducer, initState)
+  const {dispatch: uiDispatch} = useContext(Store2Context)
   return (
-    <StoreContext.Provider value={{state, dispatch: middleware(dispatch)}}>
+    <StoreContext.Provider value={{state, dispatch: middleware(dispatch, uiDispatch)}}>
       {children}
     </StoreContext.Provider>
   )
