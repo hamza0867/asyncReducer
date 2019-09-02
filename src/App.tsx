@@ -25,7 +25,7 @@ const App: React.FC = () => {
           {todos.map(todo => (
             <li key={todo.id} style={{marginBottom: "15px"}}>
               Title: {todo.title} <br />
-              Completed: {todo.completed}
+              Completed: {"" + todo.completed}
             </li>
           ))}
         </ul>
